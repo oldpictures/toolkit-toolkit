@@ -1,0 +1,871 @@
+/* Genius Toolkit v0.2.3 — compact, native-looking album sidebar widget. */
+#gt-toolkit {
+  box-sizing: border-box;
+  width: 100%; max-width: 100%;
+  margin: 0 0 20px; padding: 16px 18px;
+  background: #fff; color: #111;
+  border: 0; border-radius: 0; box-shadow: none;
+  font: inherit; font-size: 14px; line-height: 1.4; text-align: left;
+}
+#gt-toolkit, #gt-toolkit * { box-sizing: border-box; }
+#gt-toolkit .gt-topline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+#gt-toolkit .gt-heading { margin: 0; font: inherit; font-size: 16px; font-weight: 700; color: #111; }
+#gt-toolkit .gt-byline { color: #888; font-size: 12px; font-weight: 400; white-space: nowrap; }
+#gt-toolkit .gt-version { color: #888; font-size: 12px; font-weight: 400; }
+#gt-toolkit .gt-button {
+  display: inline-block; background: #ffff64; color: #111;
+  border: 1px solid #111;  
+  cursor: pointer; font: inherit; font-size: 13px; font-weight: 700;
+  line-height: 1.3; text-align: center;
+}
+#gt-toolkit .gt-button:hover, #gt-toolkit .gt-button:focus-visible { background: #ffff98; }
+#gt-toolkit .gt-button:disabled { opacity: .55; cursor: wait; }
+#gt-toolkit .gt-compare-status:empty, #gt-toolkit .gt-lookup-status:empty { display: none; }
+#gt-toolkit .gt-check { color: #226626; font-size: 12px; margin: 3px 0; }
+#gt-toolkit .gt-warning { color: #855000; font-size: 12px; font-weight: 600; margin: 4px 0; }
+#gt-toolkit .gt-note, #gt-toolkit .gt-disclaimer { color: #777; font-size: 12px; margin: 5px 0; }
+#gt-toolkit .gt-disclaimer { margin-top: 10px; }
+#gt-toolkit .gt-reference { margin-top: 13px; border-top: 1px solid #ececec; padding-top: 10px; }
+#gt-toolkit .gt-reference > summary { font-size: 13px; font-weight: 700; cursor: pointer; padding: 2px 0; }
+
+#gt-toolkit .gt-search-preview { font-size: 13px; font-weight: 600;  overflow-wrap: anywhere; }
+#gt-toolkit .gt-edit-search > summary, #gt-toolkit .gt-manual > summary {
+  color: #555; font-size: 12px; cursor: pointer; padding: 3px 0;
+}
+#gt-toolkit .gt-field-label { display: block; margin: 9px 0 4px; color: #333; font-size: 12px; font-weight: 700; }
+#gt-toolkit .gt-input {
+  display: block; width: 100%; min-width: 0; padding: 6px 8px;
+  font: inherit; font-size: 13px; line-height: 1.4;
+  border: 1px solid #aaa; border-radius: 0; color: #111; background: #fff;
+}
+#gt-toolkit .gt-input:focus-visible { outline: 2px solid #555; outline-offset: 1px; }
+
+#gt-toolkit .gt-lookup-status { margin-top: 6px; }
+
+#gt-toolkit .gt-choices[hidden] { display: none !important; }
+#gt-toolkit .gt-choices > summary { cursor: pointer; color: #333; font-weight: 700; font-size: 12px; padding: 5px 0; }
+#gt-toolkit .gt-release-results {  overflow-y: auto;  }
+#gt-toolkit .gt-release-choice {
+   text-align: left; width: 100%; padding: 7px 5px;
+  margin: 0; background: transparent; border: 0; border-bottom: 1px solid #eee;
+  color: #111; font: inherit; font-size: 12px; cursor: pointer;
+}
+#gt-toolkit .gt-release-name { display: block; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+#gt-toolkit .gt-release-meta { display: block; margin-top: 2px; color: #777; font-size: 11px; }
+#gt-toolkit .gt-release-choice:hover, #gt-toolkit .gt-release-choice:focus-visible,
+#gt-toolkit .gt-release-choice.gt-selected { background: #ffffcc; }
+#gt-toolkit .gt-release-choice:disabled { cursor: wait; opacity: .6; }
+
+#gt-toolkit .gt-stats { display: grid;  gap: 6px; }
+#gt-toolkit .gt-stat { border: 1px solid #e8e8e8; padding: 7px 3px; text-align: center; }
+#gt-toolkit .gt-stat strong { display: block; color: #111; font-size: 17px; font-weight: 700; line-height: 1.15; }
+#gt-toolkit .gt-stat span { display: block; color: #777; font-size: 11px; margin-top: 3px; }
+#gt-toolkit .gt-stat-alert strong { color: #8a4d00; }
+#gt-toolkit .gt-comparison-group { margin: 9px 0; }
+#gt-toolkit .gt-comparison-group > summary { font-size: 12px; font-weight: 700; cursor: pointer; }
+#gt-toolkit .gt-comparison-list { max-height: 160px; overflow-y: auto; padding-left: 19px; margin: 5px 0; }
+#gt-toolkit .gt-comparison-list li { padding: 2px 0; font-size: 12px; overflow-wrap: anywhere; }
+#gt-toolkit .gt-source-link { display: inline-block; margin-top: 6px; font-size: 12px; color: #111; text-decoration: underline; }
+#gt-toolkit .gt-manual { margin-top: 14px; border-top: 1px solid #ececec; padding-top: 8px; }
+#gt-toolkit .gt-textarea {  max-height: 290px; resize: vertical;  }
+/* v0.2.5: consistent compact disclosure arrows for all toolkit options. */
+#gt-toolkit details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  list-style: none;
+  cursor: pointer;
+  min-height: 26px;
+  padding: 4px 0;
+}
+#gt-toolkit details > summary::-webkit-details-marker { display: none; }
+#gt-toolkit details > summary::marker { content: ""; }
+#gt-toolkit details > summary::after {
+  content: "";
+  display: inline-block;
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid #555;
+  border-bottom: 1.5px solid #555;
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+  margin-right: 3px;
+}
+#gt-toolkit details[open] > summary::after { transform: rotate(45deg); }
+#gt-toolkit details > summary:hover { color: #111; }
+
+#gt-toolkit .gt-chevron { display: none; }
+
+#gt-toolkit .gt-comparison-group[open] { padding-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  #gt-toolkit details > summary::after { transition: none; }
+}
+
+/* v0.2.6: visible release choices with compact cover thumbnails. */
+#gt-toolkit .gt-choices-label { color:#333; font-weight:700; font-size:12px; padding:6px 0; }
+#gt-toolkit .gt-release-results {  border-top:1px solid #eee; }
+
+#gt-toolkit .gt-release-art { display:block; flex:0 0 38px; width:38px; height:38px; object-fit:cover; background:#eee; border:1px solid #e1e1e1; }
+#gt-toolkit .gt-release-art-missing { background:#eee; }
+#gt-toolkit .gt-release-text { min-width:0; flex:1; }
+
+/* v0.2.8: single linear import -> selection -> review -> compare flow. */
+#gt-toolkit .gt-step-title { font-size:12px; font-weight:700; color:#111; padding:11px 0 5px; margin-top:5px; border-top:1px solid #ececec; }
+#gt-toolkit .gt-selected-release { font-size:12px; padding:7px 8px; background:#f5f5f5; color:#333; overflow-wrap:anywhere; }
+#gt-toolkit .gt-compare { width:100%;  }
+#gt-toolkit .gt-results-heading { margin-top:13px; }
+
+
+#gt-toolkit .gt-release-results { max-height:180px; }
+
+
+/* v0.3: compact, review-first bulk-edit preparation. */
+#gt-toolkit .gt-bulk { margin-top:12px; padding-top:9px; border-top:1px solid #ececec; }
+#gt-toolkit .gt-bulk > summary { font-size:13px; font-weight:700; }
+#gt-toolkit .gt-bulk-body { padding-top:5px; }
+#gt-toolkit .gt-bulk-load { margin:6px 0; }
+#gt-toolkit .gt-bulk-status { color:#666; font-size:12px; margin:5px 0; }
+#gt-toolkit .gt-bulk-tracks { max-height:185px; overflow:auto; margin:7px 0; }
+#gt-toolkit .gt-bulk-track {  align-items:flex-start; gap:7px;  font-size:12px;  }
+#gt-toolkit .gt-bulk-track input { margin-top:2px; flex-shrink:0; accent-color:#111; }
+#gt-toolkit .gt-bulk-track span { overflow-wrap:anywhere; }
+#gt-toolkit .gt-bulk-select-actions { display:flex; gap:12px; }
+#gt-toolkit .gt-bulk-select-actions[hidden] { display:none; }
+#gt-toolkit .gt-link-button { background:none; border:0; text-decoration:underline; font:inherit; font-size:12px; padding:4px 0; cursor:pointer; }
+#gt-toolkit .gt-bulk-preview { margin-top:12px; width:100%; }
+#gt-toolkit .gt-bulk-preview-area { margin-top:10px; font-size:12px; }
+#gt-toolkit .gt-bulk-preview-area:empty { display:none; }
+#gt-toolkit .gt-bulk-review { padding-left:18px; max-height:180px; overflow:auto; }
+#gt-toolkit .gt-bulk-review li { padding:5px 0; }
+#gt-toolkit .gt-bulk-review a { color:#111; overflow-wrap:anywhere; }
+#gt-toolkit .gt-bulk-done { display:block; color:#666; font-size:11px; }
+
+/* v0.3.3: approved-tag-only album batch tagging. */
+
+#gt-toolkit .gt-bulk-track-picker > summary { font-size:12px; color:#444; }
+#gt-toolkit .gt-bulk-apply { width:100%; margin:9px 0 4px; font-weight:700; }
+#gt-toolkit .gt-bulk-disclaimer { margin:5px 0; font-size:11px; }
+#gt-toolkit .gt-bulk-approved-status { margin:5px 0 10px; font-size:12px; color:#555; }
+#gt-toolkit .gt-bulk-approved-status[data-error="true"] { color:#855000; }
+#gt-toolkit .gt-bulk-selected { display:flex; flex-wrap:wrap; gap:5px; margin:5px 0; }
+#gt-toolkit .gt-bulk-chip { display:inline-flex; align-items:center;     font-size:12px; }
+#gt-toolkit .gt-bulk-chip button { cursor:pointer; font:inherit; border:0; padding:0 2px; background:transparent; font-weight:bold; }
+#gt-toolkit .gt-bulk-suggestions { max-height:170px; overflow:auto; border:1px solid #aaa; border-top:0; background:white; }
+#gt-toolkit .gt-bulk-suggestion { display:block; width:100%; padding:7px 9px; border:0; border-bottom:1px solid #eee; background:white; font:inherit; font-size:12px; cursor:pointer; text-align:left; }
+#gt-toolkit .gt-bulk-suggestion:hover,#gt-toolkit .gt-bulk-suggestion:focus { background:#ffffbb; }
+#gt-toolkit .gt-bulk-stop { display:block; margin:4px 0; }
+#gt-toolkit .gt-bulk-stop[hidden],#gt-toolkit .gt-bulk-suggestions[hidden] { display:none!important; }
+#gt-toolkit .gt-bulk-results { max-height:185px; overflow-y:auto; font-size:12px; margin-top:6px; }
+#gt-toolkit .gt-bulk-result { padding:5px 0; border-top:1px solid #eee; overflow-wrap:anywhere; }
+#gt-toolkit .gt-bulk-result.gt-failed { color:#855000; }
+#gt-toolkit .gt-bulk-result.gt-done { color:#226626; }
+
+#gt-toolkit .gt-bulk-list-settings > summary { color:#555; font-size:12px; }
+
+/* Opt-in request diagnostics, hidden inside tag list options. */
+.gt-probe {margin-top:12px;padding-top:9px;border-top:1px solid rgba(0,0,0,.13);}
+.gt-probe .gt-link-button {margin:3px 5px 4px 0;}
+.gt-probe-status {font-size:11px;line-height:1.45;overflow-wrap:anywhere;padding-top:5px;}
+
+/* v0.4.0: native-style Tag editor with independent Add/Remove disclosures. */
+
+#gt-toolkit .gt-tag-action > summary { font-weight:700; font-size:12px; color:#222; }
+#gt-toolkit .gt-tag-action-body { padding:4px 0 3px; }
+
+#gt-toolkit .gt-remove-selected { display:flex; flex-wrap:wrap; gap:5px; margin:5px 0; }
+#gt-toolkit .gt-remove-suggestions { max-height:170px; overflow:auto; border:1px solid #aaa; border-top:0; background:white; }
+#gt-toolkit .gt-remove-suggestions[hidden] { display:none!important; }
+#gt-toolkit .gt-bulk-remove { width:100%; margin:10px 0 4px; font-weight:700; }
+#gt-toolkit .gt-tag-id-status { font-size:11px; color:#555; padding:4px 0; }
+
+#gt-toolkit .gt-tag-retry { font-size:11px; text-decoration:underline; }
+#gt-toolkit .gt-bulk-list-settings .gt-link-button { margin-right:12px; }
+
+/* v0.4.1: track selection as yellow selectable rows (native checkbox remains keyboard accessible). */
+#gt-toolkit .gt-bulk-track { position:relative; display:block; padding:7px 9px; margin:2px 0; border:1px solid transparent; border-radius:3px; cursor:pointer; line-height:1.35; transition:background-color .12s; }
+#gt-toolkit .gt-bulk-track input[type="checkbox"] { position:absolute; width:1px; height:1px; opacity:0; margin:0; pointer-events:none; }
+#gt-toolkit .gt-bulk-track.gt-track-selected { background:#ffff64; border-color:#d9d900; }
+#gt-toolkit .gt-bulk-track:not(.gt-track-selected):hover { background:#ffffd1; }
+#gt-toolkit .gt-bulk-track:focus-within { outline:2px solid #aa8c00; outline-offset:1px; }
+#gt-toolkit .gt-bulk-track:has(input:disabled) { opacity:.5; cursor:not-allowed; }
+#gt-toolkit .gt-bulk-list-settings .gt-bulk-approved-status { margin:8px 0; }
+
+/* v0.4.6: clean tag-editor navigation — spacing, not divider lines. */
+#gt-toolkit .gt-tag-action { border-bottom:0; padding:8px 0; }
+#gt-toolkit .gt-bulk-list-settings { border-top:0; margin-top:8px; padding-top:8px; }
+#gt-toolkit .gt-bulk-track-picker { margin:9px 0 8px; }
+
+/* v0.5.0: aligned side-by-side album comparison. */
+#gt-toolkit .gt-compare-legend { color:#666; font-size:11px; margin:9px 0 6px; }
+#gt-toolkit .gt-side-by-side { width:100%; border:1px solid #e4e4e4; max-height:420px; overflow-y:auto; }
+#gt-toolkit .gt-compare-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+#gt-toolkit .gt-compare-row > :first-child { border-right:1px solid #e4e4e4; }
+#gt-toolkit .gt-compare-header { position:sticky; top:0; z-index:1; background:#f2f2f2; font-size:11px; font-weight:700; }
+#gt-toolkit .gt-compare-header > div { padding:8px 7px; }
+#gt-toolkit .gt-compare-cell { display:flex; gap:5px; align-items:flex-start; min-width:0; padding:7px 5px; font-size:11px; line-height:1.4; border-top:1px solid #eee; overflow-wrap:anywhere; }
+#gt-toolkit .gt-compare-number { color:#777; flex:0 0 18px; font-variant-numeric:tabular-nums; }
+#gt-toolkit .gt-compare-title { min-width:0; }
+#gt-toolkit .gt-compare-different .gt-compare-cell { background:#ffffa8; }
+#gt-toolkit .gt-compare-genius-only .gt-compare-cell:first-child { background:#f8f8f8; }
+#gt-toolkit .gt-compare-reference-only .gt-compare-cell:last-child { background:#ffffb3; }
+#gt-toolkit .gt-compare-moved .gt-compare-cell:not(.gt-compare-empty) { background:#fffce7; }
+#gt-toolkit .gt-compare-empty { color:#aaa; justify-content:center; background:#fafafa; }
+#gt-toolkit .gt-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#gt-toolkit .gt-stat-neutral strong { color:#666; }
+
+/* v0.5.1: comparison-driven fixes; defaults are all unchecked. */
+#gt-toolkit .gt-fixes { margin-top:12px; }
+#gt-toolkit .gt-fix-options { display:flex; flex-direction:column; gap:4px; margin:7px 0 9px; max-height:215px; overflow-y:auto; }
+#gt-toolkit .gt-fix-option { display:flex; align-items:flex-start; gap:9px; padding:8px; border:1px solid #e6e6e6; cursor:pointer; font-size:12px; }
+#gt-toolkit .gt-fix-option:has(input:checked) { background:#ffff64; border-color:#b8b800; }
+#gt-toolkit .gt-fix-option input { flex:none; margin:2px 0 0; accent-color:#111; }
+#gt-toolkit .gt-fix-option strong { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.015em; }
+#gt-toolkit .gt-fix-description { display:block; overflow-wrap:anywhere; margin-top:2px; }
+#gt-toolkit .gt-fix-apply { width:100%; }
+#gt-toolkit .gt-fix-results { margin-top:8px; }
+
+/* v0.5.3 — less chrome, more tracklist. */
+#gt-toolkit .gt-reference-body { padding-top: 5px; }
+#gt-toolkit .gt-search-preview { margin: 5px 0 0; }
+#gt-toolkit .gt-edit-search > summary { padding: 2px 0; }
+#gt-toolkit .gt-auto-fields .gt-field-label { margin-top: 7px; }
+#gt-toolkit .gt-lookup-button { margin-top: 7px; }
+#gt-toolkit .gt-tracklist-label { margin: 12px 0 5px; }
+#gt-toolkit .gt-label-hint { font-weight: 400; color: #777; }
+#gt-toolkit .gt-textarea { min-height: 80px; margin-bottom: 2px; }
+#gt-toolkit .gt-compare { margin-top: 7px; }
+#gt-toolkit .gt-compare-status { margin-top: 9px; }
+#gt-toolkit .gt-compare-status:empty { display:none; }
+#gt-toolkit .gt-fixes-heading { font-weight:700; font-size:12px; margin:12px 0 4px; }
+#gt-toolkit .gt-lookup-status:empty { display:none; }
+#gt-toolkit .gt-choices { margin:5px 0; }
+
+/* v0.6.0 — native compact date editor. */
+#gt-toolkit .gt-date-editor { margin-top:12px; padding-top:9px; border-top:1px solid #ececec; }
+#gt-toolkit .gt-date-editor > summary { font-size:13px; font-weight:700; }
+#gt-toolkit .gt-date-body { padding-top:5px; }
+#gt-toolkit .gt-date-track-picker { margin:5px 0 9px; }
+#gt-toolkit .gt-date-track-picker > summary { font-size:12px; }
+#gt-toolkit .gt-date-tracks { max-height:178px; overflow-y:auto; margin:5px 0; }
+#gt-toolkit .gt-date-track { position:relative; display:block; padding:7px 9px; margin:2px 0; border:1px solid transparent; font-size:12px; cursor:pointer; }
+#gt-toolkit .gt-date-track input[type=checkbox] { position:absolute; width:1px; height:1px; opacity:0; margin:0; }
+#gt-toolkit .gt-date-track.gt-track-selected { background:#ffff64; border-color:#d9d900; }
+#gt-toolkit .gt-date-track:not(.gt-track-selected):hover { background:#ffffd1; }
+#gt-toolkit .gt-date-track:focus-within { outline:2px solid #aa8c00; outline-offset:1px; }
+#gt-toolkit .gt-date-track:has(input:disabled) { cursor:not-allowed; opacity:.5; }
+#gt-toolkit .gt-date-lookup-info, #gt-toolkit .gt-date-hint { color:#777; font-size:11px; margin:6px 0; }
+#gt-toolkit .gt-date-lookup { margin:5px 0; }
+#gt-toolkit .gt-date-choices { max-height:210px; overflow:auto; margin:7px 0; }
+#gt-toolkit .gt-date-choices[hidden], #gt-toolkit .gt-date-stop[hidden] { display:none!important; }
+#gt-toolkit .gt-date-choice { display:block; width:100%; background:#fff; color:#111; border:0; text-align:left; font:inherit; font-size:12px; padding:7px 5px; cursor:pointer; }
+#gt-toolkit .gt-date-choice:hover, #gt-toolkit .gt-date-choice.gt-date-selected { background:#ffffa8; }
+#gt-toolkit .gt-date-choice strong, #gt-toolkit .gt-date-choice small { display:block; }
+#gt-toolkit .gt-date-choice small { color:#666; font-size:11px; margin-top:2px; }
+#gt-toolkit .gt-date-source, #gt-toolkit .gt-date-status { color:#666; font-size:12px; margin:5px 0; overflow-wrap:anywhere; }
+#gt-toolkit .gt-date-source:empty, #gt-toolkit .gt-date-status:empty, #gt-toolkit .gt-date-results:empty { display:none; }
+#gt-toolkit .gt-date-modes { display:flex; flex-direction:column; gap:7px; font-size:12px; margin:10px 0; }
+#gt-toolkit .gt-date-modes label { cursor:pointer; }
+#gt-toolkit .gt-date-modes input { accent-color:#111; }
+#gt-toolkit .gt-date-apply { width:100%; margin:6px 0 0; }
+#gt-toolkit .gt-date-results { max-height:230px; overflow-y:auto; font-size:12px; }
+#gt-toolkit .gt-date-result { padding:5px 0; overflow-wrap:anywhere; }
+#gt-toolkit .gt-date-result.gt-failed { color:#855000; }
+#gt-toolkit .gt-date-result.gt-done { color:#226626; }
+
+#gt-toolkit #gt-date-value { min-height: 38px; }
+
+/* v0.6.3: single provider selector, including manual release links */
+#gt-toolkit .gt-lookup-button[hidden],
+#gt-toolkit .gt-search-preview[hidden],
+#gt-toolkit .gt-edit-search[hidden] { display:none !important; }
+
+/* v0.6.4: provider switch, no extra automatic/manual tabs. */
+#gt-toolkit .gt-auto-fields .gt-search-preview { margin-top: 8px; }
+#gt-toolkit .gt-manual-fields { margin-top: 8px; }
+
+/* v0.6.5: breathing room between release link input and import button. */
+#gt-toolkit .gt-manual-fields .gt-import-button { margin-top: 9px; }
+
+/* v0.6.7 progressive year → month → day calendar */
+#gt-toolkit .gt-date-calendar-wrap {position:relative;}
+#gt-toolkit .gt-date-display {display:flex;justify-content:space-between;align-items:center;width:100%;cursor:pointer;text-align:left;background:#fff;}
+#gt-toolkit .gt-date-popup {position:relative;margin-top:5px;padding:10px;border:1px solid #aaa;background:white;z-index:4;}
+#gt-toolkit .gt-date-popup[hidden]{display:none!important;}
+#gt-toolkit .gt-date-nav {display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+#gt-toolkit .gt-date-nav button {border:0;background:transparent;cursor:pointer;}
+#gt-toolkit .gt-cal-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}
+#gt-toolkit .gt-cal-day {grid-template-columns:repeat(7,minmax(0,1fr));}
+#gt-toolkit .gt-cal-cell {border:1px solid #ddd;background:#fff;cursor:pointer;font:inherit;}
+#gt-toolkit .gt-cal-cell:hover,#gt-toolkit .gt-cal-active {background:#ffff64;}
+#gt-toolkit .gt-cal-footer {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:12px;}
+#gt-toolkit .gt-cal-use {border:1px solid #111;background:#ffff64;padding:5px 8px;cursor:pointer;}
+
+/* v0.6.8: stable calendar navigation and accessible keyboard focus */
+#gt-toolkit .gt-cal-grid .gt-cal-cell:disabled {opacity:.28;cursor:not-allowed;background:#f5f5f5;}
+#gt-toolkit .gt-date-nav button[hidden] {display:none!important;}
+#gt-toolkit .gt-date-nav button:disabled {opacity:.28;cursor:not-allowed;}
+#gt-toolkit .gt-cal-cell:focus-visible,
+#gt-toolkit .gt-date-display:focus-visible,
+#gt-toolkit .gt-date-nav button:focus-visible,
+#gt-toolkit .gt-cal-use:focus-visible {outline:2px solid #111;outline-offset:1px;}
+
+/* v0.7.0 — role-aware credits editor; native sidebar treatment */
+#gt-toolkit .gt-credits-editor { border-top:1px solid #ececec; margin-top:12px; padding-top:9px; }
+#gt-toolkit .gt-credits-editor > summary {font-size:13px;font-weight:700;cursor:pointer;}
+#gt-toolkit .gt-credits-body {padding-top:8px;font-size:12px;}
+#gt-toolkit .gt-credits-track-picker {margin:3px 0 11px;}
+#gt-toolkit .gt-credits-tracks-heading {font-size:12px;cursor:pointer;}
+#gt-toolkit .gt-credits-tracks {max-height:185px;overflow:auto;margin:5px 0;}
+#gt-toolkit .gt-credits-track {display:block;position:relative;margin:2px 0;padding:7px 9px;border:1px solid transparent;cursor:pointer;border-radius:3px;}
+#gt-toolkit .gt-credits-track > input {position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;}
+#gt-toolkit .gt-credits-track.gt-track-selected {background:#ffff64;border-color:#d9d900;}
+#gt-toolkit .gt-credits-track:not(.gt-track-selected):hover {background:#ffffd1;}
+#gt-toolkit .gt-credits-track:focus-within {outline:2px solid #aa8c00;}
+#gt-toolkit .gt-credits-track:has(input:disabled) {opacity:.5;cursor:not-allowed;}
+#gt-toolkit .gt-credit-suggestions[hidden] {display:none!important;}
+#gt-toolkit .gt-credit-suggestions {margin-top:3px;border:1px solid #aaa;max-height:170px;overflow:auto;background:white;}
+#gt-toolkit .gt-credit-option {display:block;text-align:left;border:0;border-bottom:1px solid #eee;background:white;padding:7px;width:100%;cursor:pointer;font:inherit;color:#151515;}
+#gt-toolkit .gt-credit-option:hover,#gt-toolkit .gt-credit-option:focus {background:#ffffb3;}
+#gt-toolkit .gt-credit-artists {display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+#gt-toolkit .gt-credit-chip {display:inline-flex;align-items:center;gap:4px;padding:4px 6px;background:#f4f4f4;border:1px solid #ccc;font-size:12px;}
+#gt-toolkit .gt-credit-chip button {border:0;background:transparent;cursor:pointer;font-size:16px;line-height:1;}
+#gt-toolkit .gt-credits-note {font-size:11px;color:#777;line-height:1.4;margin:8px 0;}
+#gt-toolkit .gt-credits-action {padding:8px 0;border:0;}
+#gt-toolkit .gt-credits-action > summary {font-weight:700;cursor:pointer;}
+#gt-toolkit .gt-credits-action-body {padding:8px 0 3px;}
+#gt-toolkit .gt-credits-action .gt-button {width:100%;}
+#gt-toolkit .gt-credits-status {margin-top:8px;font-size:12px;}
+#gt-toolkit .gt-credits-results {margin:5px 0 7px;font-size:11px;max-height:210px;overflow-y:auto;}
+#gt-toolkit .gt-credits-result {padding:4px 0;border-bottom:1px solid #f0f0f0;overflow-wrap:anywhere;}
+
+/* v0.7.1: hide unused empty tag status */
+#gt-toolkit .gt-tag-id-status:empty { display:none; }
+
+/* v0.7.2 — tag autocomplete menus match the toolkit's native dropdowns. */
+#gt-toolkit .gt-bulk-suggestions,
+#gt-toolkit .gt-remove-suggestions {
+  max-height: 190px; overflow-y: auto; margin-top: 3px;
+  border: 1px solid #d9d9d9; background: #fff;
+  box-shadow: none; border-radius: 0; padding: 3px 0;
+}
+#gt-toolkit .gt-bulk-suggestions .gt-bulk-suggestion,
+#gt-toolkit .gt-remove-suggestions .gt-bulk-suggestion {
+  display: block; width: 100%; padding: 8px 10px;
+  border: 0; border-radius: 0; background: #fff;
+  color: #111; font: inherit; font-size: 12px; line-height: 1.4;
+  text-align: left; cursor: pointer; overflow-wrap: anywhere;
+}
+#gt-toolkit .gt-bulk-suggestions .gt-bulk-suggestion:hover,
+#gt-toolkit .gt-bulk-suggestions .gt-bulk-suggestion:focus-visible,
+#gt-toolkit .gt-remove-suggestions .gt-bulk-suggestion:hover,
+#gt-toolkit .gt-remove-suggestions .gt-bulk-suggestion:focus-visible {
+  background: #ffff64; outline: 0;
+}
+#gt-toolkit .gt-bulk-selected,
+#gt-toolkit .gt-remove-selected { gap: 6px; margin: 7px 0; }
+#gt-toolkit .gt-bulk-chip {
+  background: #f4f4f4; border: 1px solid #d0d0d0;
+  color: #111; padding: 4px 7px; line-height: 1.3;
+  border-radius: 0; gap: 7px;
+}
+#gt-toolkit .gt-bulk-chip button { color: #333; }
+#gt-toolkit .gt-bulk-chip button:hover,
+#gt-toolkit .gt-bulk-chip button:focus-visible { background: #ffff64; }
+#gt-toolkit .gt-bulk-chip.gt-tag-failed { background: #fff2da; border-color: #c2a071; }
+
+/* v0.7.5: tag-style inline searchable credits picker, no modal */
+#gt-toolkit .gt-credit-role-suggestions[hidden] {display:none!important;}
+#gt-toolkit .gt-credit-role-suggestions {
+  max-height:190px;overflow-y:auto;margin-top:3px;border:1px solid #d9d9d9;
+  background:#fff;box-shadow:none;border-radius:0;padding:3px 0;
+}
+#gt-toolkit .gt-credit-role-suggestions .gt-credit-role-option {
+  display:block;width:100%;padding:8px 10px;border:0;border-radius:0;
+  background:#fff;color:#111;font:inherit;font-size:12px;line-height:1.4;
+  text-align:left;cursor:pointer;overflow-wrap:anywhere;
+}
+#gt-toolkit .gt-credit-role-suggestions .gt-credit-role-option:hover,
+#gt-toolkit .gt-credit-role-suggestions .gt-credit-role-option:focus-visible {
+  background:#ffff64;outline:0;
+}
+
+#gt-toolkit .gt-credit-role-selected {display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 10px;}
+#gt-toolkit .gt-credits-editor .gt-credits-add {width:100%;margin-top:11px;}
+#gt-toolkit .gt-credits-remove-action {margin-top:8px;}
+
+/* Role, artist, and tag chip inputs use the shared control system below. */
+/* v0.7.12: consolidated sidebar control system. Changes visual behavior only. */
+#gt-toolkit {
+  --gt-ink: #111;
+  --gt-muted: #666;
+  --gt-border: #aaa;
+  --gt-subtle-border: #d0d0d0;
+  --gt-surface: #fff;
+  --gt-chip: #f4f4f4;
+  --gt-highlight: #ffff64;
+  --gt-soft-highlight: #ffffd1;
+  --gt-focus: #111;
+  --gt-control-height: 40px;
+  --gt-menu-height: 208px;
+  --gt-control-gap: 6px;
+}
+/* All standalone text, select, textarea and date fields share one geometry. */
+#gt-toolkit input.gt-input:not(:disabled),
+#gt-toolkit input.gt-input:disabled,
+#gt-toolkit select.gt-input,
+#gt-toolkit textarea.gt-input,
+#gt-toolkit .gt-date-display {
+  border: 1px solid var(--gt-border);
+  border-radius: 0;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  min-height: var(--gt-control-height);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  box-shadow: none;
+  max-width: 100%;
+}
+#gt-toolkit textarea.gt-input { min-height: 82px; }
+#gt-toolkit input.gt-input:disabled { cursor: not-allowed; background: #f7f7f7; color: #777; }
+#gt-toolkit input.gt-input::placeholder,
+#gt-toolkit textarea.gt-input::placeholder { color: #777; opacity: 1; }
+#gt-toolkit .gt-input:focus-visible,
+#gt-toolkit .gt-date-display:focus-visible {
+  outline: 2px solid var(--gt-focus);
+  outline-offset: 1px;
+  border-color: var(--gt-focus);
+}
+#gt-toolkit select.gt-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23111' stroke-width='1.6' d='m1 1 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+/* The three chip-entry fields share the same border, wrapping, focus, and padding. */
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field) {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--gt-control-gap);
+  border: 1px solid var(--gt-border);
+  border-radius: 0;
+  min-height: var(--gt-control-height);
+  padding: 5px 7px;
+  background: var(--gt-surface);
+  width: 100%;
+  cursor: text;
+}
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field):focus-within {
+  outline: 2px solid var(--gt-focus);
+  outline-offset: 1px;
+  border-color: var(--gt-focus);
+}
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field) > :is(#gt-credit-role-search,#gt-credit-artist,#gt-approved-tag-search,#gt-remove-tag-search) {
+  min-height: 28px;
+  padding: 3px 4px;
+  flex: 1 1 112px;
+  width: 90px;
+  min-width: 80px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  font-size: 13px;
+}
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field) :is(.gt-credit-role-selected,.gt-credit-artists,.gt-bulk-selected,.gt-remove-selected) {
+  display: contents;
+}
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field) :is(.gt-credit-chip,.gt-bulk-chip) {
+  display: inline-flex; align-items: center;
+  gap: 6px; min-height: 28px;
+  padding: 3px 6px;
+  background: var(--gt-chip);
+  border: 1px solid var(--gt-subtle-border);
+  border-radius: 0;
+  color: var(--gt-ink);
+  font-size: 12px; line-height: 1.3;
+  max-width: 100%; min-width: 0;
+  overflow-wrap: anywhere; white-space: normal;
+}
+#gt-toolkit :is(.gt-credit-role-field,.gt-credit-artist-field,.gt-tag-search-field) :is(.gt-credit-chip,.gt-bulk-chip) > span {
+  min-width: 0; overflow-wrap: anywhere;
+}
+#gt-toolkit :is(.gt-credit-chip,.gt-bulk-chip) > button:not(.gt-tag-retry) {
+  flex: 0 0 auto;
+  display: inline-grid; place-items: center;
+  min-width: 22px; min-height: 22px;
+  padding: 0; margin: -3px -4px -3px 0;
+  background: transparent; border: 0; border-radius: 0;
+  cursor: pointer;
+  font: inherit; font-size: 16px; line-height: 1;
+  color: #333;
+}
+#gt-toolkit :is(.gt-credit-chip,.gt-bulk-chip) > button:not(.gt-tag-retry):hover,
+#gt-toolkit :is(.gt-credit-chip,.gt-bulk-chip) > button:not(.gt-tag-retry):focus-visible {
+  background: var(--gt-highlight);
+}
+#gt-toolkit .gt-tag-failed { border-color: #b99050 !important; background: #fff2da !important; }
+/* Search menus and release choices use one consistent list treatment. */
+#gt-toolkit :is(.gt-credit-role-suggestions,.gt-credit-suggestions,.gt-bulk-suggestions,.gt-remove-suggestions,.gt-release-results,.gt-date-choices) {
+  max-height: var(--gt-menu-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--gt-subtle-border);
+  background: var(--gt-surface);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 3px 0;
+  scrollbar-width: thin;
+}
+#gt-toolkit :is(.gt-credit-role-suggestions,.gt-credit-suggestions,.gt-bulk-suggestions,.gt-remove-suggestions) {
+  margin-top: 3px;
+}
+#gt-toolkit :is(.gt-credit-role-option,.gt-credit-option,.gt-bulk-suggestion,.gt-release-choice,.gt-date-choice) {
+  background: var(--gt-surface);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 10px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+#gt-toolkit :is(.gt-credit-role-option,.gt-credit-option,.gt-bulk-suggestion,.gt-release-choice,.gt-date-choice):is(:hover,:focus-visible),
+#gt-toolkit :is(.gt-release-choice.gt-selected,.gt-date-choice.gt-date-selected) {
+  background: var(--gt-highlight);
+  outline: 0;
+}
+#gt-toolkit .gt-release-results { border-top-color: var(--gt-subtle-border); }
+#gt-toolkit .gt-release-choice { display: flex; align-items: center; min-height: 48px; gap: 9px; }
+#gt-toolkit .gt-credit-role-empty {padding: 9px 10px; color: var(--gt-muted); font-size: 12px;}
+/* Consistent yellow selected state for the three album track pickers and fix choices. */
+#gt-toolkit :is(.gt-date-track,.gt-credits-track,.gt-bulk-track,.gt-fix-option) {
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+#gt-toolkit :is(.gt-date-track,.gt-credits-track,.gt-bulk-track).gt-track-selected,
+#gt-toolkit .gt-fix-option:has(input:checked) {
+  background: var(--gt-highlight);
+  border-color: #c7c700;
+}
+#gt-toolkit :is(.gt-date-track,.gt-credits-track,.gt-bulk-track):not(.gt-track-selected):hover,
+#gt-toolkit .gt-fix-option:not(:has(input:checked)):hover {
+  background: var(--gt-soft-highlight);
+}
+#gt-toolkit :is(.gt-date-track,.gt-credits-track,.gt-bulk-track,.gt-fix-option):focus-within {
+  outline: 2px solid var(--gt-focus);
+  outline-offset: 1px;
+}
+#gt-toolkit :is(.gt-fix-option,.gt-date-modes) input:is([type=checkbox],[type=radio]) {
+  flex: none;
+  width: 16px; height: 16px;
+  accent-color: #111;
+  cursor: pointer;
+}
+#gt-toolkit .gt-date-modes label { display:flex; align-items:center; gap:8px; min-height:26px; }
+#gt-toolkit .gt-date-modes label:focus-within { outline: 2px solid var(--gt-focus); outline-offset: 1px; }
+#gt-toolkit .gt-date-modes label input { margin: 0; }
+/* Action buttons, calendar buttons, link buttons, and disclosure controls. */
+#gt-toolkit .gt-button { min-height: 36px; padding: 8px 11px; border-radius: 0; }
+#gt-toolkit .gt-button:focus-visible,
+#gt-toolkit .gt-link-button:focus-visible,
+#gt-toolkit .gt-cal-use:focus-visible {
+  outline: 2px solid var(--gt-focus);
+  outline-offset: 2px;
+}
+#gt-toolkit .gt-link-button {min-height: 28px;}
+#gt-toolkit .gt-link-button:hover {text-decoration-thickness: 2px;}
+#gt-toolkit .gt-date-popup { border-color: var(--gt-subtle-border); }
+#gt-toolkit .gt-cal-cell {border-color: var(--gt-subtle-border);min-height:34px;border-radius:0;}
+#gt-toolkit .gt-cal-cell:is(:hover,:focus-visible),
+#gt-toolkit .gt-cal-active {background:var(--gt-highlight);}
+#gt-toolkit .gt-cal-use {font:inherit;font-size:12px;font-weight:700;min-height:32px;}
+#gt-toolkit .gt-date-nav :is(.gt-cal-prev,.gt-cal-next) {
+  display:inline-grid;place-items:center;
+  width:30px;height:30px;padding:0;border:0;border-radius:0;
+  background:#fff;cursor:pointer;
+}
+#gt-toolkit .gt-date-nav :is(.gt-cal-prev,.gt-cal-next):not(:disabled):hover {background:var(--gt-highlight);}
+#gt-toolkit .gt-cal-arrow {
+  display:block;width:8px;height:8px;
+  border-top:2px solid currentColor;border-right:2px solid currentColor;
+}
+#gt-toolkit .gt-cal-prev .gt-cal-arrow {transform:rotate(-135deg);}
+#gt-toolkit .gt-cal-next .gt-cal-arrow {transform:rotate(45deg);}
+#gt-toolkit input[type=search]::-webkit-search-cancel-button {appearance:none;display:none;}
+#gt-toolkit .gt-date-calendar-icon {
+  display:inline-block;position:relative;flex:0 0 15px;
+  width:15px;height:15px;border:1.5px solid #333;border-radius:1px;
+  margin:0 2px;
+  background:linear-gradient(to bottom,transparent 0 4px,#333 4px 5.5px,transparent 5.5px);
+}
+#gt-toolkit .gt-date-calendar-icon:after {
+  content:"";position:absolute;left:3px;top:-3px;width:6px;height:4px;
+  border-left:2px solid #333;border-right:2px solid #333;
+}
+#gt-toolkit details > summary:focus-visible {outline:2px solid var(--gt-focus);outline-offset:2px;}
+/* Keep hidden menus really hidden despite the shared grouped display rules. */
+#gt-toolkit [hidden] {display:none !important;}
+@media (prefers-reduced-motion: reduce) {
+  #gt-toolkit :is(.gt-date-track,.gt-credits-track,.gt-bulk-track,.gt-fix-option) {transition:none;}
+}
+
+/* v0.8.3: small, native-looking control to the LEFT of Genius's Song Art input. */
+.gt-song-art-input-row {
+  display:flex;flex-direction:row;align-items:stretch;gap:8px;
+  box-sizing:border-box;width:100%;min-width:0;
+}
+.gt-song-art-input-row > input,
+.gt-song-art-input-row > textarea {
+  flex:1 1 auto;min-width:0;width:0 !important;max-width:none !important;
+  box-sizing:border-box;
+}
+.gt-song-art-button {
+  flex:0 0 auto;align-self:stretch;
+  box-sizing:border-box;margin:0;padding:0 12px;
+  background:#ffff64;color:#111;border:1px solid #111;border-radius:0;
+  font-family:inherit;font-size:14px;font-weight:400;line-height:1.4;
+  letter-spacing:normal;text-transform:none;white-space:nowrap;cursor:pointer;
+}
+.gt-song-art-button:hover:not(:disabled) {background:#ffff91;}
+.gt-song-art-button:focus-visible,
+.gt-song-art-choice:focus-visible {outline:2px solid #111;outline-offset:2px;}
+.gt-song-art-button:disabled {opacity:.65;cursor:wait;}
+.gt-song-art-helper {box-sizing:border-box;max-width:100%;margin-top:6px;font-family:inherit;}
+.gt-song-art-status {color:#555;font-size:12px;line-height:1.4;}
+.gt-song-art-status:empty {display:none;}
+.gt-song-art-results {display:flex;flex-direction:column;max-height:270px;overflow-y:auto;max-width:100%;margin-top:4px;}
+.gt-song-art-choice {
+  display:flex;align-items:center;gap:9px;width:100%;padding:6px;
+  box-sizing:border-box;text-align:left;background:#fff;color:#111;
+  border:1px solid #ddd;border-bottom:0;border-radius:0;cursor:pointer;
+  font-family:inherit;font-size:13px;line-height:1.4;
+}
+.gt-song-art-choice:last-child {border-bottom:1px solid #ddd;}
+.gt-song-art-choice:hover {background:#ffff64;}
+.gt-song-art-choice img {width:44px;height:44px;object-fit:cover;flex:none;}
+.gt-song-art-choice span {min-width:0;overflow-wrap:anywhere;}
+@media(max-width:500px) {.gt-song-art-button{padding:0 9px;font-size:12px;}}
+
+/* v0.8.6 — balanced Song Art controls and results. */
+.gt-song-art-column-host {
+  display:flex;
+  width:100%;max-width:100%;min-width:0;
+  flex-wrap:wrap;align-items:flex-start;
+  column-gap:18px;row-gap:16px;
+}
+.gt-song-art-column-host > .gt-song-art-helper {
+  flex:1 1 250px;min-width:220px;max-width:420px;
+  box-sizing:border-box;margin:0;align-self:flex-start;
+}
+.gt-song-art-helper {line-height:1.4;}
+.gt-song-art-column-host .gt-song-art-status,
+.gt-song-art-helper .gt-song-art-status {
+  font-family:inherit;font-size:13px;line-height:1.45;color:#333;
+  margin:0 0 9px;
+}
+.gt-song-art-helper .gt-song-art-status:empty {display:none;margin:0;}
+.gt-song-art-column-host .gt-song-art-results,
+.gt-song-art-helper .gt-song-art-results {
+  margin:0;max-height:310px;gap:6px;
+}
+.gt-song-art-helper .gt-song-art-choice {
+  min-height:64px;padding:9px 10px;gap:12px;
+  border:1px solid #ddd;border-radius:0;
+  font-family:inherit;font-size:13px;line-height:1.4;
+}
+.gt-song-art-helper .gt-song-art-choice:last-child {border-bottom:1px solid #ddd;}
+.gt-song-art-helper .gt-song-art-choice img {
+  width:48px;height:48px;object-fit:cover;flex:none;
+}
+@media(max-width:720px){
+  .gt-song-art-column-host > .gt-song-art-helper {
+    flex-basis:100%;min-width:0;max-width:100%;margin:0;
+  }
+}
+
+/* v0.8.7 — align the native Song Art URL column and use regular button type. */
+.gt-song-art-column-host > .gt-song-art-field-column {
+  margin-inline-start:0 !important;
+  padding-inline-start:0 !important;
+}
+
+/* v0.8.8 — hide only the legacy album-page React opt-in button.
+   Attribute selectors target the exact Genius action; no broad square_button
+   rule, so native album controls remain visible. CSS also covers rerenders. */
+div.square_button[tracking-event="album:react_opt_in"],
+div.square_button[ng-click*="opt_in_to_react_album_page"] {
+  display: none !important;
+}
+
+/* v0.9.1 — album editing workspace. Scoped to the detected native edit modal. */
+.gt-album-modal-root {
+  box-sizing:border-box;
+  background:#fff !important;
+  
+  
+  
+  
+  color:#111;
+  max-height:min(88vh,860px);
+  overflow-y:auto;
+}
+.gt-album-modal-root .gt-album-modal-tabs {
+  box-sizing:border-box;
+  
+  max-width:360px;
+  padding-right:22px;
+  font-family:inherit;
+}
+.gt-album-modal-root .gt-album-tab-native {display:none !important;}
+.gt-album-workspace-heading {
+  margin:0 0 20px;
+  padding:2px 0 14px;
+  border-bottom:1px solid #dedede;
+  font-family:inherit;
+  font-size:21px;
+  font-weight:600;
+  line-height:1.25;
+  text-transform:none;
+  letter-spacing:0;
+}
+#gt-album-art-panel {
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+  box-sizing:border-box;
+  font-family:inherit;
+  font-size:13px;
+  line-height:1.45;
+  color:#111;
+  min-width:0;
+}
+#gt-album-art-panel *,#gt-album-art-panel *::before,#gt-album-art-panel *::after {box-sizing:border-box;}
+#gt-album-art-panel .gt-album-art-title {
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  font-size:14px;font-weight:600;
+}
+#gt-album-art-panel .gt-album-art-dim {font-size:11px;color:#777;font-weight:400;white-space:nowrap;}
+#gt-album-art-panel .gt-album-art-frame {
+  display:flex;align-items:center;justify-content:center;
+  width:100%;aspect-ratio:1/1;max-height:230px;
+  background:#f4f4f4;border:1px solid #e0e0e0;overflow:hidden;
+}
+#gt-album-art-panel .gt-album-art-preview {display:block;width:100%;height:100%;object-fit:contain;}
+#gt-album-art-panel .gt-album-art-preview[hidden],#gt-album-art-panel [hidden] {display:none!important;}
+#gt-album-art-panel .gt-album-art-placeholder {color:#777;font-size:13px;}
+#gt-album-art-panel :is(input,button) {font-size:13px;font-weight:400;line-height:1.35;}
+#gt-album-art-panel :is(input,button):focus-visible,#gt-album-art-panel summary:focus-visible {
+  outline:2px solid #111;outline-offset:2px;
+}
+#gt-album-art-panel button {
+  min-height:36px;padding:8px 10px;border:1px solid #111;border-radius:0;
+  background:#fff;color:#111;cursor:pointer;text-align:center;
+}
+#gt-album-art-panel button:hover:not(:disabled) {background:#ffff64;}
+#gt-album-art-panel button:disabled {opacity:.55;cursor:wait;}
+#gt-album-art-panel .gt-album-art-search {background:#ffff64;}
+#gt-album-art-panel .gt-album-art-toolbar {display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;}
+#gt-album-art-panel .gt-album-art-toolbar button {flex:1 1 0;min-width:0;}
+#gt-album-art-panel .gt-album-art-query {border:0;margin:0;padding:0;}
+#gt-album-art-panel .gt-album-art-query summary {cursor:pointer;font-size:12px;color:#444;list-style:none;}
+#gt-album-art-panel .gt-album-art-query summary::-webkit-details-marker {display:none;}
+#gt-album-art-panel .gt-album-art-query summary::after {content:"";display:inline-block;width:7px;height:7px;vertical-align:3px;margin-left:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);}
+#gt-album-art-panel .gt-album-art-query[open] summary {margin-bottom:9px;}
+#gt-album-art-panel .gt-album-art-query[open] summary::after {transform:rotate(225deg);}
+#gt-album-art-panel :is(.gt-album-art-query label,.gt-album-art-url-label) {display:block;font-size:12px;font-weight:600;margin-bottom:4px;}
+#gt-album-art-panel :is(.gt-album-art-query input,#gt-album-art-url) {
+  display:block;width:100%;min-width:0;min-height:36px;padding:7px 9px;
+  border:1px solid #aaa;border-radius:0;background:white;color:#111;
+}
+#gt-album-art-panel .gt-album-art-query input {margin-bottom:10px;}
+#gt-album-art-panel .gt-album-art-status {min-height:0;color:#444;font-size:12px;overflow-wrap:anywhere;}
+#gt-album-art-panel .gt-album-art-status:empty {display:none;}
+#gt-album-art-panel .gt-album-art-results {
+  display:flex;flex-direction:column;gap:5px;max-height:212px;overflow-y:auto;
+}
+#gt-album-art-panel .gt-album-art-results:empty {display:none;}
+#gt-album-art-panel .gt-album-art-choice {
+  display:flex;align-items:center;gap:9px;min-height:64px;width:100%;
+  padding:6px;text-align:left;border:1px solid #d4d4d4;background:#fff;
+}
+#gt-album-art-panel .gt-album-art-choice[aria-selected=true] {background:#ffff64;border-color:#111;}
+#gt-album-art-panel .gt-album-art-choice img {flex:0 0 48px;width:48px;height:48px;object-fit:cover;}
+#gt-album-art-panel .gt-album-art-choice span {min-width:0;overflow-wrap:anywhere;}
+#gt-album-art-panel .gt-album-art-choice strong {display:block;font-size:12px;font-weight:600;}
+#gt-album-art-panel .gt-album-art-choice small {display:block;font-size:11px;color:#555;margin-top:3px;}
+/* Native Genius controls retain their Angular bindings; only their appearance changes. */
+.gt-album-modal-root :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),textarea,select) {
+  box-sizing:border-box;border-radius:0;font-family:inherit;
+}
+.gt-album-modal-root :is(input,textarea,select):focus-visible {outline:2px solid #111;outline-offset:1px;}
+.gt-album-modal-root .gt-album-native-save {border:1px solid #111 !important;background:#ffff64 !important;color:#111 !important;font-weight:500 !important;padding:7px 13px !important;}
+.gt-album-modal-root .gt-album-native-cancel {color:#555 !important;}
+@media(max-width:760px){
+ .gt-album-modal-root .gt-album-modal-tabs {min-width:0;max-width:none;padding:0 0 20px;}
+ .gt-album-modal-root {max-height:92vh;}
+ #gt-album-art-panel .gt-album-art-frame{max-height:195px;}
+}
+@media(prefers-reduced-motion:reduce){#gt-album-art-panel *{scroll-behavior:auto!important;}}
+
+/* Custom artwork controls use sentence case; native Genius field labels remain untouched. */
+#gt-album-art-panel :is(.gt-album-art-title,.gt-album-art-url-label) {text-transform:none;letter-spacing:normal;}
+
+/* v0.9.1 — one-click album cover handoff. */
+#gt-album-art-panel .gt-album-art-url-row{display:flex;align-items:stretch;gap:7px;min-width:0;}
+#gt-album-art-panel .gt-album-art-url-row #gt-album-art-url{flex:1 1 auto;width:1px;min-width:0;}
+#gt-album-art-panel .gt-album-art-url-row .gt-album-art-copy{flex:0 0 auto;white-space:nowrap;}
+#gt-album-art-panel .gt-album-art-next{font-size:12px;line-height:1.45;border-left:3px solid #111;background:#ffffd7;padding:9px 10px;overflow-wrap:anywhere;}
+
+/* v0.9.3 — remove the entire legacy pencil edit action on album pages,
+   rather than only hiding its SVG and leaving an invisible click target.
+   The selector is limited to a parent that actually contains this exact icon. */
+html.gt-album-page :is(button, a, .tiny_edit_button, [role="button"]):has(svg.tiny_edit_button-svg[src="pencil.svg"]),
+html.gt-album-page .gt-hidden-legacy-pencil { display: none !important; }
+html.gt-album-page svg.tiny_edit_button-svg[src="pencil.svg"] { display: none !important; }
+
+/* v0.10.0: clean native modal edges and predictable injected artwork layout. */
+.gt-album-modal-root { border:0 !important; outline:0 !important; border-radius:0 !important; box-shadow:none !important; }
+.gt-album-modal-root .gt-album-modal-tabs { min-width:0; }
+#gt-album-art-panel :is(input,button) { font-family:inherit; letter-spacing:normal; text-transform:none; }
+#gt-album-art-panel .gt-album-art-query summary { display:inline-flex; align-items:center; }
+#gt-album-art-panel .gt-album-art-choice:not(:disabled):focus-visible { outline:2px solid #111; outline-offset:-2px; }
+@media (max-width:760px){
+  .gt-album-modal-root .gt-album-modal-tabs { width:100%; }
+  #gt-album-art-panel .gt-album-art-results { max-height:190px; }
+}
+
+/* v0.10.2: remove the native dialog's OUTER frame, not just the content border.
+   The JS applies this class only to close-fitting album modal wrappers. */
+.gt-album-modal-frame {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+}
+.gt-album-modal-frame::before,
+.gt-album-modal-frame::after { box-shadow: none !important; }
+
+/* Album pages without a right sidebar: stay within the album content. */
+#gt-toolkit.gt-inline-fallback { max-width: 460px; margin: 12px 0 20px; }
+
+/* Keep the selected song-art option visible after an explicit replacement. */
+.gt-song-art-helper .gt-song-art-choice[aria-pressed="true"] {background:#ffff64;outline:1px solid #111;outline-offset:-1px;}
+
+/* v0.10.16: inline album artwork application without opening the file picker. */
+#gt-album-art-panel .gt-album-art-apply-actions{display:flex;gap:8px;align-items:stretch;}
+#gt-album-art-panel .gt-album-art-apply-actions button{flex:1 1 0;min-width:0;}
+#gt-album-art-panel .gt-album-art-apply-actions .gt-album-art-apply{background:#ffff64;font-weight:600;}
+#gt-album-art-panel .gt-album-art-apply-actions .gt-album-art-copy{background:#fff;}

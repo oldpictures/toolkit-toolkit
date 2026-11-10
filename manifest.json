@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "Toolkit Toolkit",
+  "version": "0.10.16",
+  "description": "Toolkit Toolkit by refrsh: unified album and song editors, artwork lookup, and bulk metadata tools.",
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "*://genius.com/*",
+    "https://musicbrainz.org/*",
+    "https://docs.google.com/*",
+    "https://api.discogs.com/*",
+    "https://www.discogs.com/*",
+    "https://coverartarchive.org/*",
+    "https://www.youtube.com/*",
+    "https://soundcloud.com/*",
+    "https://itunes.apple.com/*",
+    "https://music.apple.com/*",
+    "https://*.mzstatic.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://genius.com/*"
+      ],
+      "js": [
+        "content/api-errors.js",
+        "content/artwork-utils.js",
+        "content/title-utils.js",
+        "content/tag-api.js",
+        "content/album-tags.js",
+        "content/track-fixes.js",
+        "content/album-dates.js",
+        "content/album-credits.js",
+        "content/song-media.js",
+        "content/album-modal.js",
+        "content/toolkit.js"
+      ],
+      "css": [
+        "content/toolkit.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "genius-toolkit@example.org"
+    }
+  },
+  "background": {
+    "scripts": [
+      "background/musicbrainz.js",
+      "background/tags.js",
+      "background/discogs.js",
+      "background/media.js",
+      "background/apple-art.js"
+    ]
+  }
+}
