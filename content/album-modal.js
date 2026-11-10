@@ -1,4 +1,4 @@
-/* Toolkit Toolkit 0.10.16 — inline album artwork apply and resilient search.
+/* Toolkit Toolkit 0.10.14 — native album editor and resilient artwork search.
    Search Apple Music and the album's own verified Genius metadata, without
    guessing song artwork or overriding existing covers automatically. */
 (() => {
@@ -250,10 +250,18 @@
    <div class="gt-album-art-status" role="status" aria-live="polite"></div>
    <div class="gt-album-art-results" role="listbox" aria-label="Album artwork matches"></div>
    <label class="gt-album-art-url-label" for="gt-album-art-url">Cover art URL</label>
-   <div class="gt-album-art-url-row"><input id="gt-album-art-url" type="url" spellcheck="false" placeholder="https://..." autocomplete="off"></div>
-   <div class="gt-album-art-apply-actions"><button type="button" class="gt-album-art-apply" disabled>Apply artwork</button><button type="button" class="gt-album-art-copy" disabled>Copy link</button></div>
+   <div class="gt-album-art-url-row"><input id="gt-album-art-url" type="url" spellcheck="false" placeholder="https://..." autocomplete="off"><button type="button" class="gt-album-art-copy">Copy link</button></div>
   `;
   return panel;
+ }
+ function setNative(input,value){
+  if(!input || input.disabled || input.readOnly)return false;
+  const proto=input instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+  const setter=Object.getOwnPropertyDescriptor(proto,'value')?.set;
+  if(setter)setter.call(input,value);else input.value=value;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+  return input.value===value;
  }
  const dimensions=artwork.dimensions,validUrl=artwork.validUrl;
  async function copyValue(value){
@@ -263,77 +271,91 @@
   try{result=document.execCommand('copy');}catch{}
   input.remove();return result;
  }
- // The native Genius editor already wires `on-file-picked` to
- // `$ctrl.update(cover_art, url)` on <cover-art-form>. In Firefox, content
- // scripts use an isolated JS world; wrappedJSObject gives access to the
- // page's Angular instance without injecting code or exposing a new API.
- // Only address the *empty add-artwork tile*. Existing cover records must
- // never be selected implicitly, and no request is made during search.
- function findEmptyNativeCover(form,angular,ctrl){
-  if(typeof ctrl?.visible_cover_arts!=='function')return null;
-  const covers=ctrl.visible_cover_arts();
-  if(!Array.isArray(covers))return null;
-  const empty=cover=>cover&&typeof cover==='object'&&
-   ![cover.image_url,cover.url,cover.cover_art_url].some(value=>typeof value==='string'&&value.trim());
-  const tiles=[...form.querySelectorAll('.cover_art_form-cover_art_container[ng-repeat]')];
-  for(const tile of tiles){
-   if(!tile.querySelector('image-upload-button[on-file-picked]'))continue;
-   let art;
-   try{art=angular.element(tile).scope()?.cover_art;}catch{}
-   if(art && covers.includes(art) && empty(art))return art;
+ function fillNativeCover(modal,url){
+  // Target real image/cover URL controls only. Never touch the album name, header
+  // image or unrelated text inputs while Genius changes its Angular tab content.
+  const candidates=[...modal.querySelectorAll('input,textarea,[contenteditable="true"]')]
+   .filter(el=>!el.closest('#'+PANEL)&&visible(el)&&!el.disabled&&!el.readOnly&&
+    el.type!=='hidden'&&el.type!=='file');
+  const isText=el=>el.isContentEditable||el.tagName==='TEXTAREA'||['text','url','search'].includes(el.type);
+  const isImage=/cover[_\s-]?(art|image)|album[_\s-]?(art|image)|artwork|image[_\s-]?url/i;
+  const excludes=/header|banner|artist|title|name/i;
+  function attributes(el){return [el.id,el.name,el.getAttribute('ng-model'),el.getAttribute('data-testid'),el.getAttribute('aria-label'),el.placeholder].filter(Boolean).join(' ');}
+  let chosen=candidates.find(el=>isText(el)&&isImage.test(attributes(el))&&!excludes.test(attributes(el)));
+  if(!chosen){
+   // Some Genius editors associate a plain input with a nearby label instead
+   // of marking the input itself. Only accept strong cover-art label context.
+   chosen=candidates.find(el=>{
+    if(!isText(el)||excludes.test(attributes(el)))return false;
+    const label=el.id?modal.querySelector(`label[for="${CSS.escape(el.id)}"]`):null;
+    const local=TEXT(label)||TEXT(el.closest('.field,.input_field,.form-group,.form_field')?.querySelector('label,[class*="label"]'));
+    return /(?:cover|artwork|album image|image)\s*(?:art\s*)?(?:url|link|image)?/i.test(local)&&!/header|banner/i.test(local);
+   });
   }
-  // With Angular debugInfo disabled, ng-repeat scopes can be inaccessible.
-  // The component's own visible-cover list still identifies the empty tile.
-  const blanks=covers.filter(empty);
-  return blanks.length===1?blanks[0]:null;
+  if(!chosen){
+   const urlInputs=candidates.filter(el=>isText(el)&&
+    (/^(url|image url|cover url|paste url)$/i.test((el.placeholder||'').trim())||
+     el.type==='url')&&!excludes.test(attributes(el)));
+   if(urlInputs.length===1)chosen=urlInputs[0];
+  }
+  if(!chosen)return false;
+  if(chosen.isContentEditable){
+   chosen.textContent=url;
+   chosen.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:url}));
+   chosen.dispatchEvent(new Event('change',{bubbles:true}));
+   return chosen.textContent===url;
+  }
+  return setNative(chosen,url);
  }
- function callGeniusCoverUpdate(form,url,page=window){
-  const angular=(page?.wrappedJSObject||page)?.angular;
-  if(typeof angular?.element!=='function')return {ok:false,reason:'angular-unavailable'};
-  let element,ctrl,scope;
-  try{
-   element=angular.element(form);
-   ctrl=element.controller('coverArtForm');
-   scope=element.isolateScope?.()||element.scope?.();
-   ctrl=ctrl||scope?.$ctrl;
-  }catch{return {ok:false,reason:'controller-unavailable'};}
-  if(typeof ctrl?.update!=='function')return {ok:false,reason:'controller-unavailable'};
-  const target=findEmptyNativeCover(form,angular,ctrl);
-  if(!target)return {ok:false,reason:'no-empty-cover-slot'};
-  try{
-   // `update` is Genius's own handler; we do not forge a Genius API request.
-   // It can persist immediately, so call it only after an explicit click.
-   const pending=ctrl.update(target,url);
-   try{scope?.$applyAsync?.();}catch{}
-   return {ok:true,pending};
-  }catch(e){return {ok:false,reason:'native-update-failed',error:String(e?.message||e)};}
+ function copyInstruction(panel,copied,opened,filled){
+  const next=panel.querySelector('.gt-album-art-next');
+  next.hidden=false;
+  const steps=[];
+  if(filled){steps.push('Cover link added to Genius. Review it, then click Genius’s Save button.');}
+  else if(opened){
+   steps.push(copied?'Link copied. Paste it into Genius’s cover URL field (Ctrl+V), then save.':'Couldn’t copy automatically. Click “Copy link,” then paste into Genius’s cover URL field and save.');
+  }else{
+   steps.push(copied?'Link copied. Save your album info before selecting artwork to open Genius’s cover editor.':'Save your album info, then use “Copy link” and open Genius’s cover editor.');
+  }
+  next.textContent=steps.join(' ');
  }
- async function applyNativeCover(ctx,url,isCurrent=()=>true){
-  if(!isCurrent()||!ctx.modal.isConnected)return {ok:false,reason:'stale'};
-  if(ctx.isInfoDirty())return {ok:false,reason:'unsaved-info'};
-  // This changes the current tab in the *same* album modal, not the Filestack
-  // file picker. The user remains in the editor throughout.
+ // Confirm the clipboard result *before* opening Genius's cover tab or
+ // waiting for its native URL input to mount. Keep the guidance visible while
+ // the optional native autofill runs, so it cannot flash away immediately.
+ async function copyAndNotify(panel,url,onCopied,isCurrent=()=>true){
+  const copied=await copyValue(url);
+  if(!panel.isConnected||!isCurrent())return false;
+  copyInstruction(panel,copied,true,false);
+  await onCopied(copied);
+  return copied;
+ }
+ async function openNativeCover(ctx,panel,url,alreadyCopied=false){
+  if(!panel.isConnected)return;
+  const status=panel.querySelector('.gt-album-art-status');
+  if(ctx.isInfoDirty()){
+   if(!alreadyCopied)copyInstruction(panel,false,false,false);
+   status.textContent='Album info has unsaved changes. Save those changes in Genius before switching to cover art.';
+   return false;
+  }
   ctx.tab2.click();
-  for(let attempt=0;attempt<12;attempt++){
-   if(!isCurrent()||!ctx.modal.isConnected)return {ok:false,reason:'stale'};
-   const form=ctx.modal.querySelector('cover-art-form[cover-arts][type="album"]');
-   if(form){
-    const result=callGeniusCoverUpdate(form,url);
-    if(result.ok && result.pending && typeof result.pending.then==='function'){
-     try{
-      const reply=await result.pending;
-      const hasErrors=globalThis.GeniusToolkitApiErrors?.hasErrors;
-      if(typeof hasErrors==='function'&&(hasErrors(reply)||hasErrors(reply?.data))){
-       return {ok:false,reason:'native-update-rejected',error:'Genius reported an upload error'};
-      }
-     }catch(e){return {ok:false,reason:'native-update-rejected',error:String(e?.message||e)};}
-    }
-    return {ok:result.ok,reason:result.reason||null,error:result.error||null};
+  panel.querySelector('.gt-album-art-back').hidden=false;
+  const current=panel.dataset.coverAttempt=(String((Number(panel.dataset.coverAttempt)||0)+1));
+  let attempt=0;
+  const run=()=>{
+   if(!panel.isConnected||!ctx.modal.isConnected||panel.dataset.coverAttempt!==current)return;
+   if(fillNativeCover(ctx.modal,url)){
+    status.textContent='Genius’s cover URL field was filled automatically. You can skip pasting; review and save.';
+    if(!alreadyCopied)copyInstruction(panel,false,true,true);
+    return;
    }
-   await new Promise(resolve=>setTimeout(resolve,120));
-  }
-  return {ok:false,reason:'cover-editor-not-mounted'};
+   if(++attempt<8){setTimeout(run,180);return;}
+   status.textContent='1000 × 1000 artwork selected.';
+   if(!alreadyCopied)copyInstruction(panel,false,true,false);
+  };
+  setTimeout(run,80);
+  return true;
  }
+
  function install(found){
   const {modal,group,tab1,tab2}=found;
   if(group.querySelector('#'+PANEL))return;
@@ -367,25 +389,19 @@
   const status=panel.querySelector('.gt-album-art-status'),results=panel.querySelector('.gt-album-art-results');
   const urlInput=panel.querySelector('#gt-album-art-url');
   const copyButton=panel.querySelector('.gt-album-art-copy');
-  const applyButton=panel.querySelector('.gt-album-art-apply');
   const next=panel.querySelector('.gt-album-art-next');
-  let selectedVersion=0,applying=false;
   const syncButtons=()=>{
    const ready=!!validUrl(urlInput.value);
    copyButton.disabled=!ready;
-   applyButton.disabled=!ready||applying;
   };
-  urlInput.addEventListener('input',()=>{
-   selectedVersion++;syncButtons();next.hidden=true;
-   for(const choice of results.querySelectorAll('.gt-album-art-choice'))choice.setAttribute('aria-selected','false');
-  });
+  urlInput.addEventListener('input',()=>{syncButtons();next.hidden=true;});
   urlInput.addEventListener('change',async()=>{
    const url=validUrl(urlInput.value);if(!url)return;
    const size=await dimensions(url);
    if(!panel.isConnected||url!==validUrl(urlInput.value))return;
    if(size?.width===1000&&size.height===1000){
     image.hidden=false;placeholder.hidden=true;image.src=url;
-    status.textContent='1000 × 1000 artwork ready. Click Apply artwork to add it to Genius.';
+    status.textContent='1000 × 1000 artwork ready. Copy the link or choose artwork from the results.';
    }else status.textContent='The image is not accessible at 1000 × 1000 pixels. Nothing changed in Genius.';
   });
   syncButtons();
@@ -453,13 +469,16 @@
       if(!panel.isConnected||path!==versionPath()||request!==original.requestSeq)return;
       all.forEach(item=>item.disabled=false);
       if(size?.width!==1000||size?.height!==1000){status.textContent='This image is not 1000 × 1000; choose a different result.';return;}
-      selectedVersion++;urlInput.value=c.artwork;syncButtons();
+      urlInput.value=c.artwork;syncButtons();
       image.hidden=false;placeholder.hidden=true;image.src=c.artwork;
-      image.alt='Selected artwork preview (not yet applied)';
       all.forEach(item=>item.setAttribute('aria-selected',String(item===button)));
-      // Searching or selecting never writes to Genius: explicit Apply only.
-      next.hidden=true;
-      status.textContent='1000 × 1000 artwork selected. Click Apply artwork to add it to Genius.';
+      // Selecting the cover is the action: verify, copy and show the Genius
+      // cover form. The fallback never silently edits unrelated native fields.
+      await copyAndNotify(panel,c.artwork,async copied=>{
+       if(urlInput.value!==c.artwork||request!==original.requestSeq||path!==versionPath())return;
+       status.textContent='1000 × 1000 artwork selected.';
+       await openNativeCover(ctx,panel,c.artwork,copied);
+      },()=>urlInput.value===c.artwork&&request===original.requestSeq&&path===versionPath());
      });
     }
    }catch(e){if(request===original.requestSeq&&panel.isConnected)status.textContent='Artwork lookup failed: '+String(e?.message||e);}
@@ -475,57 +494,11 @@
     items[next]?.focus();
    }else if(event.key==='Escape'){event.preventDefault();panel.querySelector('.gt-album-art-search').focus();}
   });
-  applyButton.addEventListener('click',async()=>{
-   if(applying)return;
-   const url=validUrl(urlInput.value);
-   if(!url){status.textContent='Enter a valid HTTPS cover URL first.';return;}
-   if(ctx.isInfoDirty()){
-    status.textContent='Save your album info changes in Genius before applying cover artwork.';
-    return;
-   }
-   const selection=selectedVersion,path=versionPath();
-   const stillCurrent=()=>panel.isConnected&&path===versionPath()&&
-    selection===selectedVersion&&validUrl(urlInput.value)===url;
-   applying=true;syncButtons();next.hidden=true;
-   status.textContent='Checking artwork dimensions…';
-   try{
-    const size=await dimensions(url);
-    if(!stillCurrent())return;
-    if(size?.width!==1000||size?.height!==1000){
-     status.textContent='Only verified 1000 × 1000 artwork can be applied. Nothing changed.';
-     return;
-    }
-    status.textContent='Applying through Genius’s album cover editor…';
-    const result=await applyNativeCover(ctx,url,stillCurrent);
-    if(!stillCurrent())return;
-    if(result.ok){
-     panel.querySelector('.gt-album-art-back').hidden=false;
-     status.textContent='Artwork sent to Genius. Check its cover list; save if Genius prompts you.';
-     next.hidden=true;
-    }else if(result.reason==='unsaved-info'){
-     status.textContent='Save your album info in Genius first, then click Apply artwork again.';
-    }else if(result.reason!=='stale'){
-     // Failure is non-destructive. Provide the original Genius URL uploader
-     // path as fallback; never claim the cover was applied successfully.
-     const copied=await copyValue(url);
-     if(!stillCurrent())return;
-     panel.querySelector('.gt-album-art-back').hidden=false;
-     status.textContent=copied?'Direct apply isn’t available in this Genius editor. The artwork URL was copied.':
-      'Direct apply isn’t available. Click Copy link to copy the artwork URL.';
-     next.hidden=false;
-     next.textContent='In the gray camera tile, choose Link (URL), paste the artwork URL, and confirm.';
-    }
-   }catch(e){
-    if(stillCurrent())status.textContent='Couldn’t apply the artwork. Nothing was changed: '+String(e?.message||e);
-   }finally{applying=false;if(panel.isConnected)syncButtons();}
-  });
   panel.querySelector('.gt-album-art-copy').addEventListener('click',async()=>{
    const url=validUrl(urlInput.value);if(!url){status.textContent='Enter a valid HTTPS image URL first.';return;}
    const copied=await copyValue(url);
-   status.textContent=copied?'Link copied. Paste it into Genius’s cover URL field (Ctrl+V), then save.':
-    'Couldn’t copy automatically. Select the link above and press Ctrl+C.';
-   next.hidden=false;
-   next.textContent='Manual alternative: click the gray camera tile → Link (URL), paste the cover link and confirm.';
+   status.textContent=copied?'Cover link copied.':'Couldn’t copy automatically. Select the link above and press Ctrl+C.';
+   copyInstruction(panel,copied,true,false);
   });
   panel.querySelector('.gt-album-art-back').addEventListener('click',()=>{
    tab1.click();panel.querySelector('.gt-album-art-back').hidden=true;
@@ -550,5 +523,5 @@
   if(changes.some(c=>!c.target?.closest?.('#'+PANEL+', #gt-toolkit, .gt-album-art-results')))schedule();
  }).observe(document.documentElement,{subtree:true,childList:true});
  addEventListener('popstate',schedule);
- globalThis.GeniusToolkitAlbumModalTests={findModal,infoFromModal,routeInfo,compactName,artworkVariants,albumCoverUrls,geniusAlbumArtwork,sameAlbumURL,sameAlbumSongURL,validUrl,dimensions,copyValue,findEmptyNativeCover,callGeniusCoverUpdate,applyNativeCover};
+ globalThis.GeniusToolkitAlbumModalTests={findModal,infoFromModal,routeInfo,compactName,artworkVariants,albumCoverUrls,geniusAlbumArtwork,sameAlbumURL,sameAlbumSongURL,validUrl,dimensions,setNative,fillNativeCover,copyValue,copyInstruction,copyAndNotify};
 })();

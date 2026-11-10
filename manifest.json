@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Toolkit Toolkit",
-  "version": "0.10.16",
+  "version": "0.10.15",
   "description": "Toolkit Toolkit by refrsh: unified album and song editors, artwork lookup, and bulk metadata tools.",
   "permissions": [
     "storage",

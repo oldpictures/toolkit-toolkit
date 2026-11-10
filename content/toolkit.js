@@ -141,7 +141,7 @@
     panel.innerHTML = `
       <div class="gt-topline">
         <h3 class="gt-heading">Toolkit Toolkit <span class="gt-byline">by refrsh</span></h3>
-        <span class="gt-version">v0.10.16</span>
+        <span class="gt-version">v0.10.15</span>
       </div>
       <details class="gt-reference">
         <summary>Compare tracklists <span class="gt-chevron"></span></summary>

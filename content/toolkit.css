@@ -863,9 +863,3 @@ html.gt-album-page svg.tiny_edit_button-svg[src="pencil.svg"] { display: none !i
 
 /* Keep the selected song-art option visible after an explicit replacement. */
 .gt-song-art-helper .gt-song-art-choice[aria-pressed="true"] {background:#ffff64;outline:1px solid #111;outline-offset:-1px;}
-
-/* v0.10.16: inline album artwork application without opening the file picker. */
-#gt-album-art-panel .gt-album-art-apply-actions{display:flex;gap:8px;align-items:stretch;}
-#gt-album-art-panel .gt-album-art-apply-actions button{flex:1 1 0;min-width:0;}
-#gt-album-art-panel .gt-album-art-apply-actions .gt-album-art-apply{background:#ffff64;font-weight:600;}
-#gt-album-art-panel .gt-album-art-apply-actions .gt-album-art-copy{background:#fff;}
